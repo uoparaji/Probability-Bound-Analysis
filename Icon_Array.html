@@ -1,5 +1,7 @@
+from PIL import Image
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 size_Icon = 20
 size_Space = 5
@@ -58,5 +60,5 @@ while i <= i_num-1:
 	i_pos = i_pos+size_Icon+size_Space	
 	i+=1
 		
-plt.imshow(data, interpolation='nearest')
-plt.show()
+img = Image.fromarray(data, 'RGB')
+img.show()
