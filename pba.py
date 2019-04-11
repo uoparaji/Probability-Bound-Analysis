@@ -2,66 +2,133 @@
 
 def cBox(k, n, nsteps = 1000):
     
+    tol = 1e-06
+    
     import numpy as np
     
     from scipy.stats import beta as beta
     
-    if type(k) == int:  
-        k = (k, k)
-        
-    elif type(k) == float: 
-        k = (k, k)
-        
-    else: 
-        k = k 
-          
-    if type(n) == int:      
-        n = (n, n)    
-        
-    elif type(n) == float: 
-        n = (n, n)
-        
-    else: 
-        n = n
-        
-    if np.size(k) > 1 and k[0] > k[1] or np.size(n) > 1 and n[0] > n[1]:
-        
-        import sys
-        
-        sys.exit("Lower Bound cannot be greater than Upper Bound")
+    if k == 0:
+        k = tol
     
     else:
-       
-        Fx = np.linspace(0, 1, nsteps)
+        k = k
         
+    if k == [0, 0]:
+        
+        k = [tol, tol]
+        
+    else:
+        k = k
+        
+    if type(k) == list and type(k[1]) == float:
+        
+        k = [tol, k[1]]
+    
+    else:
+        k = k
+        
+    if type(k) == list and type(k[1]) == int:
+        
+        k = [tol, k[1]]
+    
+    else:
+        k = k
+    
+    
+    if type(k) == int:
+            
+            k = (k, k)
+            
+    elif type(k) == float: 
+            k = (k, k)
+            
+    else: 
+            k = k 
+            
+    if type(n) == int:
+        
+            n = (n, n)    
+            
+    elif type(n) == float: 
+            n = (n, n)
+            
+    else: 
+            n = n
+            
+    if np.size(k) > 1 and k[0] > k[1] or np.size(n) > 1 and n[0] > n[1]:
+            
+        import sys
+            
+        sys.exit("Lower Bound cannot be greater than Upper Bound")
+        
+    else:
+           
+        Fx = np.linspace(0, 1, nsteps)
+            
         dist_left = beta(k[0], n[1]-k[0]+1)
         dist_right = beta(k[1]+1, n[0]-k[1])
-        
+            
         param_all = {'param_alpha_left'  : k[0],
-                     'param_beta_left'   : n[1]-k[0]+1, 
-                     'param_alpha_right' : k[1]+1,
-                     'param_beta_right'  : n[0]-k[1]}
-        
-        lower_bound = dist_left.cdf(Fx)
-        upper_bound = dist_right.cdf(Fx)
- 
-    return {'support' : Fx, 'lb': lower_bound, 'ub': upper_bound, 'betaparam': param_all}
+                        'param_beta_left'   : n[1]-k[0]+1, 
+                         'param_alpha_right' : k[1]+1,
+                         'param_beta_right'  : n[0]-k[1]}
+            
+        if k == n:
+            lower_bound = dist_left.cdf(Fx)
+            import numpy as np
+            upper_bound = np.repeat(1-tol, nsteps)
+            flag = True
+            
+        else:
+            lower_bound = dist_left.cdf(Fx)
+            upper_bound = dist_right.cdf(Fx)
+            flag = False
+    
+    return {'support' : Fx, 'lb': lower_bound, 'ub': upper_bound, 'betaparam': param_all, 'flag': flag}
 
 def plotcBox(Cbox):
     
-    from matplotlib import pyplot as plt
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
-    
-    if type(Cbox.get('support')) != list:
-    
-        plt.plot(Cbox.get('support'), Cbox.get('lb'), 'r')
-        plt.plot(Cbox.get('support'), Cbox.get('ub'), 'b')
-    else:
+    tol = 1e-06
+    if Cbox.get('flag') == True:
+        from matplotlib import pyplot as plt
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
         
-        plt.step(Cbox.get('lb'), Cbox.get('support')[0], where ='pre')
-        plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
+        if type(Cbox.get('support')) != list:
         
+            plt.plot(Cbox.get('support'), Cbox.get('lb'), 'r')
+            plt.axvline(x = 1-tol, color = 'b')
+        else:
+            plt.step(Cbox.get('lb'), Cbox.get('support')[0], where ='pre')
+            plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
+            
+    elif Cbox.get('flag') == False:
+        from matplotlib import pyplot as plt
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        
+        if type(Cbox.get('support')) != list:
+        
+            plt.plot(Cbox.get('support'), Cbox.get('lb'), 'r')
+            plt.plot(Cbox.get('support'), Cbox.get('ub'), 'b')
+        else:
+            
+            plt.step(Cbox.get('lb'), Cbox.get('support')[0], where ='pre')
+            plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
+            
+    elif Cbox.get('flag') == 'unknown':
+        from matplotlib import pyplot as plt
+        
+        if type(Cbox.get('support')) != list:
+        
+            plt.plot(Cbox.get('support'), Cbox.get('lb'), 'r')
+            plt.plot(Cbox.get('support'), Cbox.get('ub'), 'b')
+        else:
+            
+            plt.step(Cbox.get('lb'), Cbox.get('support')[0], where ='pre')
+            plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
+                
     return
 
 def addIntervals(interval_a, interval_b):
@@ -96,19 +163,48 @@ def linear_interpolate(x_values, y_values, x):
     y_interp = scipy.interpolate.interp1d(x_values, y_values) 
     return y_interp(x).tolist()
 
-
 def computeConfidenceInterval(Cbox, alpha_level = 0.05, beta_level = 0.95, show_plot = False):
+    
+    tol = 1e-6
      
-    if Cbox.get('betaparam') != 'unknown':
+    if Cbox.get('betaparam') != 'unknown' and Cbox.get('flag') == False:
+        
+        from scipy.stats import beta
+        
+        parameters = Cbox.get('betaparam')
+        left_interval = beta.ppf(alpha_level, parameters['param_alpha_left'], parameters['param_beta_left'])
+        right_interval = beta.ppf(beta_level, parameters['param_alpha_right'], parameters['param_beta_right'])
+            
+        # plot focal elements      
+        if show_plot == True:
+            
+            import matplotlib.pyplot as plt
+            
+            plt.xlim(0, 1)
+            plt.ylim(0, 1)
+            
+            plt.plot((0, left_interval), (alpha_level, alpha_level), 'r--')
+            plt.plot((left_interval, left_interval), (0, alpha_level), 'r--')
+            
+            plt.plot((0, right_interval), (beta_level, beta_level), 'b--')
+            plt.plot((right_interval, right_interval), (0, beta_level), 'b--')
+                        
+            # plot original pbox
+            x = Cbox.get('support')
+            lower_bound = Cbox.get('lb')
+            upper_bound = Cbox.get('ub')
+            plt.plot(x, lower_bound)
+            plt.plot(x, upper_bound)
+            
+    elif Cbox.get('betaparam') != 'unknown' and Cbox.get('flag') == True:
         
         from scipy.stats import beta
         
         parameters = Cbox.get('betaparam')
         
         left_interval = beta.ppf(alpha_level, parameters['param_alpha_left'], parameters['param_beta_left'])
-        right_interval = beta.ppf(beta_level, parameters['param_alpha_right'], parameters['param_beta_right'])
-    
-        intervals = [left_interval, right_interval]
+        
+        right_interval = 1-tol
         
         # plot focal elements      
         if show_plot == True:
@@ -130,46 +226,44 @@ def computeConfidenceInterval(Cbox, alpha_level = 0.05, beta_level = 0.95, show_
             upper_bound = Cbox.get('ub')
             plt.plot(x, lower_bound)
             plt.plot(x, upper_bound)
+          
+    elif Cbox.get('betaparam') == 'unknown' and Cbox.get('flag') == 'unknown':
         
-    elif Cbox.get('betaparam') == 'unknown':
+        import numpy as np
         
-        left_fe_cb1 = []
-        right_fe_cb1 = []
-        
-        # loop over number of samples
-        for i in range(npoints):
+        if type(Cbox.get('support')) != list:
+
+            left_interval = linear_interpolate(Cbox.get('support').tolist(), Cbox.get('lb').tolist(), alpha_level)
+            right_interval = linear_interpolate(Cbox.get('support').tolist(), Cbox.get('ub').tolist(), beta_level)
+                            
+        elif type(Cbox.get('support')) == list and np.shape(Cbox.get('support'))[0] == 2:
             
-            if np.shape(Cbox.get('support'))[0] == 1:
-            # first cbox
-                left_focal_elements_cb1 = linear_interpolate(Cbox.get('support').tolist(), Cbox.get('lb').tolist(), Fx_left[i])
-                right_focal_elements_cb1 = linear_interpolate(Cbox.get('support').tolist(), Cbox.get('ub').tolist(), Fx_right[i])
-                left_fe_cb1.append(left_focal_elements_cb1)
-                right_fe_cb1.append(right_focal_elements_cb1)
-                
-            elif np.shape(Cbox.get('support'))[0] == 2:
-                left_focal_elements_cb1 = linear_interpolate(Cbox.get('support')[0].tolist(), Cbox.get('lb').tolist(), Fx_left[i])
-                right_focal_elements_cb1 = linear_interpolate(Cbox.get('support')[1].tolist(), Cbox.get('ub').tolist(), Fx_right[i])
-                left_fe_cb1.append(left_focal_elements_cb1)
-                right_fe_cb1.append(right_focal_elements_cb1)
-                
-        focal_elements = [[lf, rf] for lf, rf in zip(left_fe_cb1, right_fe_cb1)]
-            
+            left_interval = linear_interpolate(Cbox.get('support')[0].tolist(), Cbox.get('lb').tolist(), alpha_level)
+            right_interval = linear_interpolate(Cbox.get('support')[1].tolist(), Cbox.get('ub').tolist(), beta_level)
+                                
+                        
         if show_plot == True:
             
             import matplotlib.pyplot as plt
             
             plt.xlim(0, 1)
             plt.ylim(0, 1)
-            plt.step(left_fe_cb1, Fx_left, where='pre')
-            plt.step(right_fe_cb1, Fx_right, where= 'post')
+            
+            plt.plot((0, left_interval), (alpha_level, alpha_level), 'r--')
+            plt.plot((left_interval, left_interval), (0, alpha_level), 'r--')
+            
+            plt.plot((0, right_interval), (beta_level, beta_level), 'b--')
+            plt.plot((right_interval, right_interval), (0, beta_level), 'b--')
+                        
             # plot original pbox
-            x = Cbox.get('support')
             lower_bound = Cbox.get('lb')
             upper_bound = Cbox.get('ub')
-            plt.plot(x, lower_bound)
-            plt.plot(x, upper_bound)
-    
-    return
+            
+            
+            plt.step(Cbox.get('lb'), Cbox.get('support')[0], where ='pre')
+            plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
+        
+    return [left_interval, right_interval]
 
 def cBoxcBox(kCbox, nCbox, npoints = 100):
     
@@ -177,6 +271,7 @@ def cBoxcBox(kCbox, nCbox, npoints = 100):
     focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
     
     Cbox_list = []
+    
     for i in range(npoints):
         Cbox = cBox(focal_elements_k[i], focal_elements_n[i])
         Cbox_list.append(Cbox)
@@ -194,17 +289,19 @@ def cBoxcBox(kCbox, nCbox, npoints = 100):
     average_lower = np.sum(lower_values_list, axis  = 0)/npoints
     average_upper = np.sum(upper_values_list, axis  = 0)/npoints
     x = Cbox_list[0]['support'] 
+    flag = 'unknown'
     
-    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown'} 
+    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag} 
 
 def computeFocalElements(Cbox, npoints = 100, show_plot = False):
     
+    tol = 1e-6
     import numpy as np
 
     Fx_left = np.linspace(0, (npoints-1)/npoints, npoints)
     Fx_right = np.linspace(1, npoints, npoints)/npoints
  
-    if Cbox.get('betaparam') != 'unknown':
+    if Cbox.get('betaparam') != 'unknown' and Cbox.get('flag') == False:
         
         from scipy.stats import beta
         
@@ -236,8 +333,43 @@ def computeFocalElements(Cbox, npoints = 100, show_plot = False):
             upper_bound = Cbox.get('ub')
             plt.plot(x, lower_bound)
             plt.plot(x, upper_bound)
+    
+    elif Cbox.get('betaparam') != 'unknown' and Cbox.get('flag') == True:
         
-    elif Cbox.get('betaparam') == 'unknown':
+        from scipy.stats import beta
+        
+        parameters = Cbox.get('betaparam')
+        
+        left_focal_elements = beta.ppf(Fx_left, parameters['param_alpha_left'], parameters['param_beta_left'])
+        
+        import numpy as np
+        right_focal_elements = np.repeat(1-tol, npoints)
+        left_focal_elements = left_focal_elements.tolist()
+        right_focal_elements = right_focal_elements.tolist() 
+        focal_elements = [[lf, rf] for lf, rf in zip(left_focal_elements, right_focal_elements)]
+        
+        # plot focal elements      
+        if show_plot == True:
+            
+            import matplotlib.pyplot as plt
+            
+            plt.xlim(0, 1)
+            plt.ylim(0, 1)
+            
+            plt.scatter(left_focal_elements, Fx_left)
+            plt.scatter(right_focal_elements, Fx_right)
+                        
+            plt.step(left_focal_elements, Fx_left, where = 'pre')
+            plt.step(right_focal_elements, Fx_right, where = 'post')
+            
+            # plot original pbox
+            x = Cbox.get('support')
+            lower_bound = Cbox.get('lb')
+            upper_bound = Cbox.get('ub')
+            plt.plot(x, lower_bound)
+            plt.plot(x, upper_bound)
+        
+    elif Cbox.get('betaparam') == 'unknown' and Cbox.get('flag') == 'unknown':
         
         left_fe_cb1 = []
         right_fe_cb1 = []
@@ -357,7 +489,7 @@ def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):
             
             out[j + k * len(focal_element_Cbox1)] = addIntervals(focal_element_Cbox1[j],
                      focal_element_Cbox2[k])
-            
+    # sort out in increasing order       
     sort_out = np.sort(out, 0)
     lower_sort = sort_out[:,0]
     upper_sort = sort_out[:,1]
@@ -376,9 +508,10 @@ def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 def subtractCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     
@@ -478,9 +611,10 @@ def subtractCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
         import matplotlib.pyplot as plt
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 def multiplyCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     
@@ -582,9 +716,10 @@ def multiplyCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
         import matplotlib.pyplot as plt
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 def divideCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     
@@ -684,9 +819,10 @@ def divideCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
         import matplotlib.pyplot as plt
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 def addCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
@@ -723,6 +859,14 @@ def addCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     else:
         
         num = num
+    
+    if type(num) == float:
+        
+        num = [num, num]
+        
+    else:
+        
+        num = num
         
     focal_element_num = [num]*(npoints)
     
@@ -752,9 +896,10 @@ def addCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+        
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 def subtractCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     
@@ -791,6 +936,14 @@ def subtractCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         num = num
         
+    if type(num) == float:
+        
+        num = [num, num]
+    
+    else:
+        
+        num = num
+        
     focal_element_num = [num]*(npoints)
             
     out = np.zeros((len(focal_elements)**2, 2)) 
@@ -819,9 +972,10 @@ def subtractCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
     
 def multiplyCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     
@@ -848,6 +1002,7 @@ def multiplyCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         focal_elements = [[lf, rf] for lf, rf in zip(left_fe, right_fe)]
     
     elif Cbox.get('betaparam') != 'unknown':
+        
         focal_elements = computeFocalElements(Cbox, npoints = npoints)
         
     if type(num) == int:
@@ -894,9 +1049,10 @@ def multiplyCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
     
 def divideCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     
@@ -934,6 +1090,14 @@ def divideCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         num = num
         
+    if type(num) == float:
+        
+        num = [num, num]
+    
+    else:
+        
+        num = num
+        
     focal_element_num = [num]*(npoints)
             
     out = np.zeros((len(focal_elements)**2, 2)) 
@@ -963,9 +1127,10 @@ def divideCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+    
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
         
 def subtractNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     
@@ -1000,7 +1165,15 @@ def subtractNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
         num = [num, num]      
     else:  
         
-        num = num  
+        num = num
+        
+    if type(num) == float:
+        
+        num = [num, num]
+    
+    else:
+        
+        num = num
         
     focal_element_num = [num]*(npoints)
         
@@ -1030,12 +1203,13 @@ def subtractNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
         
         plt.step(lower_bound, Fx_left, where ='pre')
         plt.step(upper_bound, Fx_right, where ='post')
-        plt.show
+        
+    flag = 'unknown' 
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 
-def divideNumberNcbox(num, Cbox, npoints = 100):
+def divideNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     
     import numpy as np
     
@@ -1073,6 +1247,14 @@ def divideNumberNcbox(num, Cbox, npoints = 100):
         
         num = num 
         
+    if type(num) == float:
+        
+        num = [num, num]
+    
+    else:
+        
+        num = num
+        
     focal_element_num = [num]*(npoints)
     
     out = np.zeros((len(focal_elements)**2, 2)) 
@@ -1095,13 +1277,16 @@ def divideNumberNcbox(num, Cbox, npoints = 100):
         lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
         upper_bound[l] = upper_sort[l*len(focal_elements)]
         
-    import matplotlib.pyplot as plt
+    if show_plot == True:
+        
+        import matplotlib.pyplot as plt
+        
+        plt.step(lower_bound, Fx_left, where ='pre')
+        plt.step(upper_bound, Fx_right, where ='post')
     
-    plt.step(lower_bound, Fx_left, where ='pre')
-    plt.step(upper_bound, Fx_right, where ='post')
-    plt.show
+    flag = 'unknown'
      
-    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown'}
+    return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
 
 
         
