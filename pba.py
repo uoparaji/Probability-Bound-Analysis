@@ -21,14 +21,14 @@ def cBox(k, n, nsteps = 1000):
     else:
         k = k
         
-    if type(k) == list and type(k[1]) == float:
+    if type(k) == list and type(k[1]) == float and k[0] == 0:
         
         k = [tol, k[1]]
     
     else:
         k = k
         
-    if type(k) == list and type(k[1]) == int:
+    if type(k) == list and type(k[1]) == int and k[0] == 0:
         
         k = [tol, k[1]]
     
