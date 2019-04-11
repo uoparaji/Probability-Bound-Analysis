@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar  6 16:54:53 2019
 
+@author: BRIGHT
+"""
 
 def cBox(k, n, nsteps = 1000):
     
@@ -40,7 +45,8 @@ def cBox(k, n, nsteps = 1000):
             
             k = (k, k)
             
-    elif type(k) == float: 
+    elif type(k) == float:
+        
             k = (k, k)
             
     else: 
