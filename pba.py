@@ -2,7 +2,7 @@
 """
 Created on Wed Mar  6 16:54:53 2019
 
-@author: BRIGHT
+@author: Bright Uchenna Oparaji
 """
 
 def cBox(k, n, nsteps = 1000):
@@ -40,7 +40,6 @@ def cBox(k, n, nsteps = 1000):
     else:
         k = k
     
-    
     if type(k) == int:
             
             k = (k, k)
@@ -57,6 +56,7 @@ def cBox(k, n, nsteps = 1000):
             n = (n, n)    
             
     elif type(n) == float: 
+            
             n = (n, n)
             
     else: 
@@ -69,35 +69,68 @@ def cBox(k, n, nsteps = 1000):
         sys.exit("Lower Bound cannot be greater than Upper Bound")
         
     else:
-           
+                  
+        if k[1] >= n[0]:
+            
+            dist_left = beta(k[0], n[1]-k[0]+1)
+            dist_right = beta(k[1]+1, tol)
+            
+            param_all = {'param_alpha_left'  : k[0],
+                            'param_beta_left'   : n[1]-k[0]+1, 
+                             'param_alpha_right' : k[1]+1,
+                             'param_beta_right'  : tol}
+                
+        else:
+                
+            dist_left = beta(k[0], n[1]-k[0]+1)
+            dist_right = beta(k[1]+1, n[0]-k[1])
+                
+            param_all = {'param_alpha_left'  : k[0],
+                            'param_beta_left'   : n[1]-k[0]+1, 
+                             'param_alpha_right' : k[1]+1,
+                             'param_beta_right'  : n[0]-k[1]}
+            
         Fx = np.linspace(0, 1, nsteps)
-            
-        dist_left = beta(k[0], n[1]-k[0]+1)
-        dist_right = beta(k[1]+1, n[0]-k[1])
-            
-        param_all = {'param_alpha_left'  : k[0],
-                        'param_beta_left'   : n[1]-k[0]+1, 
-                         'param_alpha_right' : k[1]+1,
-                         'param_beta_right'  : n[0]-k[1]}
-            
+   
         if k == n:
-            lower_bound = dist_left.cdf(Fx)
-            import numpy as np
+            import numpy as np    
+            lower_bound = dist_left.cdf(Fx)    
             upper_bound = np.repeat(1-tol, nsteps)
             flag = True
             
-        else:
+        else:     
             lower_bound = dist_left.cdf(Fx)
             upper_bound = dist_right.cdf(Fx)
             flag = False
     
     return {'support' : Fx, 'lb': lower_bound, 'ub': upper_bound, 'betaparam': param_all, 'flag': flag}
 
+def cBox2(k, m, nsteps = 1000):
+    return cBox(k, addIntervals(k, m), nsteps = nsteps)
+
+def phi(a, b):
+    return a/(a+b)
+    
+# phiPPV = phi(alpha,beta)
+# phiNPV = phi(delta,gamma)
+# phiSens = phi(alpha,gamma)
+# phiSpec = phi(delta,beta)
+# phiAcc = phi((alpha+delta),(beta+gamma))
+
+def g(a, b, phi):
+    return (phi*a+(1-phi)*b)/(2*phi*(1-phi)*(a+b))-1
+
+def f(a, b, phi):
+    return multiplyCboxNnumber(cBox(g(a, b, phi), g(a, b, phi) + g(b, a, phi)), a+b)
+
+
 def plotcBox(Cbox):
     
     tol = 1e-06
     if Cbox.get('flag') == True:
+        
         from matplotlib import pyplot as plt
+        
         plt.xlim(0, 1)
         plt.ylim(0, 1)
         
@@ -110,7 +143,9 @@ def plotcBox(Cbox):
             plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
             
     elif Cbox.get('flag') == False:
+        
         from matplotlib import pyplot as plt
+        
         plt.xlim(0, 1)
         plt.ylim(0, 1)
         
@@ -124,6 +159,7 @@ def plotcBox(Cbox):
             plt.step(Cbox.get('ub'), Cbox.get('support')[1], where ='post')
             
     elif Cbox.get('flag') == 'unknown':
+        
         from matplotlib import pyplot as plt
         
         if type(Cbox.get('support')) != list:
@@ -137,18 +173,90 @@ def plotcBox(Cbox):
                 
     return
 
+
+
 def addIntervals(interval_a, interval_b):
+    
+    if type(interval_a) == int:
+            
+            interval_a = (interval_a, interval_a)
+            
+    elif type(interval_a) == float:
+        
+            interval_a = (interval_a, interval_a)
+            
+    else: 
+            interval_a = interval_a 
+            
+    if type(interval_b) == int:
+        
+            interval_b = (interval_b, interval_b)    
+            
+    elif type(interval_b) == float: 
+            
+            interval_b = (interval_b, interval_b)
+            
+    else: 
+            interval_b = interval_b
+    
     lower = interval_a[0] + interval_b[0]
     upper = interval_a[1] + interval_b[1]
     return [lower, upper]
 
 def subtractIntervals(interval_a, interval_b):
+    
+    if type(interval_a) == int:
+            
+            interval_a = (interval_a, interval_a)
+            
+    elif type(interval_a) == float:
+        
+            interval_a = (interval_a, interval_a)
+            
+    else: 
+            interval_a = interval_a 
+            
+    if type(interval_b) == int:
+        
+            interval_b = (interval_b, interval_b)    
+            
+    elif type(interval_b) == float: 
+            
+            interval_b = (interval_b, interval_b)
+            
+    else: 
+            interval_b = interval_b
+            
     lower = interval_a[0] - interval_b[1]
     upper = interval_a[1] - interval_b[0]
     return [lower, upper]
     
 def multiplyIntervals(interval_a, interval_b):
-    import numpy as np                                       
+    
+    if type(interval_a) == int:
+            
+            interval_a = (interval_a, interval_a)
+            
+    elif type(interval_a) == float:
+        
+            interval_a = (interval_a, interval_a)
+            
+    else: 
+            interval_a = interval_a 
+            
+    if type(interval_b) == int:
+        
+            interval_b = (interval_b, interval_b)    
+            
+    elif type(interval_b) == float: 
+            
+            interval_b = (interval_b, interval_b)
+            
+    else: 
+            interval_b = interval_b
+    
+    import numpy as np
+                                       
     lower = np.min([interval_a[0] * interval_b[0], interval_a[0] * interval_b[1], interval_a[1] * interval_b[0],
                 interval_a[1] * interval_b[1]])
     upper = np.max([interval_a[0] * interval_b[0], interval_a[0] * interval_b[1], interval_a[1] * interval_b[0],
@@ -156,6 +264,29 @@ def multiplyIntervals(interval_a, interval_b):
     return [lower, upper]
 
 def divideIntervals(interval_a, interval_b):
+    
+    if type(interval_a) == int:
+            
+            interval_a = (interval_a, interval_a)
+            
+    elif type(interval_a) == float:
+        
+            interval_a = (interval_a, interval_a)
+            
+    else: 
+            interval_a = interval_a 
+            
+    if type(interval_b) == int:
+        
+            interval_b = (interval_b, interval_b)    
+            
+    elif type(interval_b) == float: 
+            
+            interval_b = (interval_b, interval_b)
+            
+    else: 
+            interval_b = interval_b
+    
     if interval_b[0] == 0 or interval_b[1] == 0:    
         Ynum = [-float('inf'), float('inf')]
         out = multiplyIntervals(interval_a, Ynum)
@@ -291,17 +422,170 @@ def cBoxcBox(kCbox, nCbox, npoints = 100):
         lower_values_list.append(lower)
         upper_values_list.append(upper)
     
-    import numpy as np  
-    average_lower = np.sum(lower_values_list, axis  = 0)/npoints
-    average_upper = np.sum(upper_values_list, axis  = 0)/npoints
-    x = Cbox_list[0]['support'] 
+    import numpy as np 
+    
+    average_lower = np.sum(lower_values_list, axis = 0)/npoints
+    average_upper = np.sum(upper_values_list, axis = 0)/npoints
+    x = Cbox_list[0]['support']
+    
     flag = 'unknown'
     
-    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag} 
+    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag}
 
+def cBoxcBox2(kCbox, nCbox, npoints = 100):
+    
+    focal_elements_k = computeFocalElements(kCbox, npoints = npoints)
+    focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
+    
+    Cbox_list = []
+    
+    for i in range(npoints):
+        Cbox = cBox2(focal_elements_k[i], focal_elements_n[i])
+        Cbox_list.append(Cbox)
+        
+    lower_values_list = []
+    upper_values_list = []
+
+    for j in range(npoints):    
+        lower = Cbox_list[j]['lb']
+        upper = Cbox_list[j]['ub']
+        lower_values_list.append(lower)
+        upper_values_list.append(upper)
+    
+    import numpy as np 
+    
+    average_lower = np.sum(lower_values_list, axis = 0)/npoints
+    average_upper = np.sum(upper_values_list, axis = 0)/npoints
+    x = Cbox_list[0]['support']
+    
+    flag = 'unknown'
+    
+    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag}
+
+def cBoxcBox3(kCbox, nCbox, npoints = 100):
+    
+    focal_elements_k = computeFocalElements(kCbox, npoints = npoints)
+    focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
+    
+    Cbox_list = []
+    
+    for i in range(npoints):
+        for k in range(npoints):
+            Cbox_list.append(cBox(focal_elements_k[i], focal_elements_n[k]))
+        
+    lower_values_list = []
+    upper_values_list = []
+
+    for j in range(npoints**2):    
+        lower = Cbox_list[j]['lb']
+        upper = Cbox_list[j]['ub']
+        lower_values_list.append(lower)
+        upper_values_list.append(upper)
+    
+    import numpy as np 
+    
+    average_lower = np.sum(lower_values_list, axis = 0)/npoints**2
+    average_upper = np.sum(upper_values_list, axis = 0)/npoints**2
+    x = Cbox_list[0]['support']
+    
+    flag = 'unknown'
+    
+    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag}
+
+def cBoxcBox4(kCbox, nCbox, npoints = 100):
+    
+    focal_elements_k = computeFocalElements(kCbox, npoints = npoints)
+    focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
+    
+    Cbox_list = []
+    
+    for i in range(npoints):
+        for k in range(npoints):
+            Cbox_list.append(cBox2(focal_elements_k[i], focal_elements_n[k]))
+        
+    lower_values_list = []
+    upper_values_list = []
+
+    for j in range(npoints**2):    
+        lower = Cbox_list[j]['lb']
+        upper = Cbox_list[j]['ub']
+        lower_values_list.append(lower)
+        upper_values_list.append(upper)
+    
+    import numpy as np 
+    
+    average_lower = np.sum(lower_values_list, axis = 0)/npoints**2
+    average_upper = np.sum(upper_values_list, axis = 0)/npoints**2
+    x = Cbox_list[0]['support']
+    
+    flag = 'unknown'
+    
+    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag}
+
+#def cBoxcBox5(kCbox, nCbox, npoints = 100):
+#    
+#    focal_elements_k = computeFocalElements(kCbox, npoints = npoints)
+#    focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
+#    
+#    Cbox_list = [None]*len(focal_elements_k)**2
+#    
+#    for j in range(len(focal_elements_k)):
+#        for k in range(len(focal_elements_n)):
+#            Cbox_list[j + k * len(focal_elements_k)] = cBox(focal_elements_k[j],
+#                     focal_elements_n[k])
+#    lower_values_list = []
+#    upper_values_list = []
+#
+#    for j in range(npoints**2):    
+#        lower = Cbox_list[j]['lb']
+#        upper = Cbox_list[j]['ub']
+#        lower_values_list.append(lower)
+#        upper_values_list.append(upper)
+#    
+#    import numpy as np 
+#    
+#    average_lower = np.sum(lower_values_list, axis = 0)/npoints**2
+#    average_upper = np.sum(upper_values_list, axis = 0)/npoints**2
+#    x = Cbox_list[0]['support']
+#    
+#    flag = 'unknown'
+#    
+#    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag}
+
+#def cBoxcBox6(kCbox, nCbox, npoints = 100):
+#    
+#    focal_elements_k = computeFocalElements(kCbox, npoints = npoints)
+#    focal_elements_n = computeFocalElements(nCbox, npoints = npoints)
+#    
+#    Cbox_list = [None]*len(focal_elements_k)**2
+#    
+#    for j in range(len(focal_elements_k)):
+#        for k in range(len(focal_elements_n)):
+#            Cbox_list[j + k * len(focal_elements_k)] = cBox2(focal_elements_k[j],
+#                     focal_elements_n[k])
+#    lower_values_list = []
+#    upper_values_list = []
+#
+#    for j in range(npoints**2):    
+#        lower = Cbox_list[j]['lb']
+#        upper = Cbox_list[j]['ub']
+#        lower_values_list.append(lower)
+#        upper_values_list.append(upper)
+#    
+#    import numpy as np 
+#    
+#    average_lower = np.sum(lower_values_list, axis = 0)/npoints**2
+#    average_upper = np.sum(upper_values_list, axis = 0)/npoints**2
+#    x = Cbox_list[0]['support']
+#    
+#    flag = 'unknown'
+#    
+#    return {'support' : x, 'lb': average_lower, 'ub': average_upper, 'betaparam': 'unknown', 'flag': flag} 
+# 
 def computeFocalElements(Cbox, npoints = 100, show_plot = False):
     
     tol = 1e-6
+    
     import numpy as np
 
     Fx_left = np.linspace(0, (npoints-1)/npoints, npoints)
@@ -349,6 +633,7 @@ def computeFocalElements(Cbox, npoints = 100, show_plot = False):
         left_focal_elements = beta.ppf(Fx_left, parameters['param_alpha_left'], parameters['param_beta_left'])
         
         import numpy as np
+        
         right_focal_elements = np.repeat(1-tol, npoints)
         left_focal_elements = left_focal_elements.tolist()
         right_focal_elements = right_focal_elements.tolist() 
@@ -380,7 +665,7 @@ def computeFocalElements(Cbox, npoints = 100, show_plot = False):
         left_fe_cb1 = []
         right_fe_cb1 = []
         
-        # loop over number of samples
+        # loop over number of points
         for i in range(npoints):
             
             if np.shape(Cbox.get('support'))[0] == 1:
@@ -415,7 +700,7 @@ def computeFocalElements(Cbox, npoints = 100, show_plot = False):
         
     return focal_elements
 
-def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):   
+def addCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):   
     
     import numpy as np   
     
@@ -463,7 +748,7 @@ def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):
             right_fe_cb1.append(right_focal_elements_cb1)
             
         focal_element_Cbox1 = [[lf, rf] for lf, rf in zip(left_fe_cb1, right_fe_cb1)]
-        focal_element_Cbox2 = computeFocalElements(Cbox2, npoints=npoints)
+        focal_element_Cbox2 = computeFocalElements(Cbox2, npoints = npoints)
         
     elif Cbox1.get('betaparam') != 'unknown' and Cbox2.get('betaparam') == 'unknown':
         
@@ -478,13 +763,13 @@ def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):
             left_fe_cb2.append(left_focal_elements_cb2)
             right_fe_cb2.append(right_focal_elements_cb2)
         
-        focal_element_Cbox1 = computeFocalElements(Cbox1, npoints=npoints)
+        focal_element_Cbox1 = computeFocalElements(Cbox1, npoints = npoints)
         focal_element_Cbox2 = [[lf, rf] for lf, rf in zip(left_fe_cb2, right_fe_cb2)]
       
     else:
         
-        focal_element_Cbox1 = computeFocalElements(Cbox1, npoints=npoints)    
-        focal_element_Cbox2 = computeFocalElements(Cbox2, npoints=npoints)
+        focal_element_Cbox1 = computeFocalElements(Cbox1, npoints = npoints)    
+        focal_element_Cbox2 = computeFocalElements(Cbox2, npoints = npoints)
     
     # preallocation
     out = np.zeros((len(focal_element_Cbox2)**2, 2)) 
@@ -505,8 +790,8 @@ def addCbox(Cbox1, Cbox2, npoints=100, show_plot = False):
     upper_bound = np.zeros(len(focal_element_Cbox1))
     
     for l in range(len(focal_element_Cbox1)):
-        lower_bound[l] = lower_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
-        upper_bound[l] = upper_sort[l*len(focal_element_Cbox1)]
+        lower_bound[l] = lower_sort[l*len(focal_element_Cbox1)]
+        upper_bound[l] = upper_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
         
     if show_plot == True:
             
@@ -609,8 +894,8 @@ def subtractCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_element_Cbox1))
     
     for l in range(len(focal_element_Cbox1)):
-        lower_bound[l] = lower_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
-        upper_bound[l] = upper_sort[l*len(focal_element_Cbox1)]
+        lower_bound[l] = lower_sort[l*len(focal_element_Cbox1)]
+        upper_bound[l] = upper_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
             
     if show_plot == True:
         
@@ -714,8 +999,9 @@ def multiplyCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_element_Cbox1))
     
     for l in range(len(focal_element_Cbox1)):
-        lower_bound[l] = lower_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
-        upper_bound[l] = upper_sort[l*len(focal_element_Cbox1)]
+        lower_bound[l] = lower_sort[l*len(focal_element_Cbox1)]
+        upper_bound[l] = upper_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
+
     
     if show_plot == True:
         
@@ -817,8 +1103,8 @@ def divideCbox(Cbox1, Cbox2, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_element_Cbox1))
     
     for l in range(len(focal_element_Cbox1)):
-        lower_bound[l] = lower_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
-        upper_bound[l] = upper_sort[l*len(focal_element_Cbox1)]
+        lower_bound[l] = lower_sort[l*len(focal_element_Cbox1)]
+        upper_bound[l] = upper_sort[l * len(focal_element_Cbox1) + len(focal_element_Cbox1)-1]
     
     if show_plot == True:
         
@@ -893,8 +1179,8 @@ def addCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_elements))
    
     for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
         
     if show_plot == True:
         
@@ -969,8 +1255,8 @@ def subtractCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_elements))
     
     for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
         
     if show_plot == True:
     
@@ -1044,11 +1330,12 @@ def multiplyCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
     
     lower_bound = np.zeros(len(focal_elements))
     upper_bound = np.zeros(len(focal_elements))
-   
-    for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
     
+    for l in range(len(focal_elements)):
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
+
+   
     if show_plot == True:     
         
         import matplotlib.pyplot as plt
@@ -1124,8 +1411,8 @@ def divideCboxNnumber(Cbox, num, npoints = 100, show_plot = False):
 
     
     for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
     
     if show_plot == True:
         
@@ -1200,8 +1487,8 @@ def subtractNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_elements))
     
     for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
         
     if show_plot == True:
             
@@ -1213,7 +1500,6 @@ def subtractNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     flag = 'unknown' 
      
     return {'support' : [Fx_left, Fx_right], 'lb': lower_bound, 'ub': upper_bound, 'betaparam': 'unknown', 'flag': flag}
-
 
 def divideNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     
@@ -1280,8 +1566,8 @@ def divideNumberNcbox(num, Cbox, npoints = 100, show_plot = False):
     upper_bound = np.zeros(len(focal_elements))
 
     for l in range(len(focal_elements)):
-        lower_bound[l] = lower_sort[l * len(focal_elements) + len(focal_elements)-1]
-        upper_bound[l] = upper_sort[l*len(focal_elements)]
+        lower_bound[l] = lower_sort[l*len(focal_elements)]
+        upper_bound[l] = upper_sort[l * len(focal_elements) + len(focal_elements)-1]
         
     if show_plot == True:
         
