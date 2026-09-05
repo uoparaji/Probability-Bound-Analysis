@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pba"
+version = "0.2.0"
+description = "Probability Bound Analysis: confidence boxes (c-boxes) and interval arithmetic for imprecise probability."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Bright Uchenna Oparaji", email = "boparaji30@gmail.com" },
+]
+keywords = [
+    "confidence-box",
+    "cbox",
+    "imprecise-probability",
+    "interval-arithmetic",
+    "uncertainty-quantification",
+    "probability-bound-analysis",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=1.22",
+    "scipy>=1.9",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.5",
+]
+notebooks = [
+    "jupyter>=1.0",
+    "ipykernel>=6.25",
+]
+
+[project.urls]
+Homepage = "https://github.com/uoparaji/Probability-Bound-Analysis"
+Repository = "https://github.com/uoparaji/Probability-Bound-Analysis"
+Issues = "https://github.com/uoparaji/Probability-Bound-Analysis/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pba = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+extend-exclude = ["examples", "*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "NPY"]
+ignore = ["E501", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.coverage.run]
+source = ["pba"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
